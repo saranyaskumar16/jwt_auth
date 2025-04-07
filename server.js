@@ -7,6 +7,7 @@ const mongoose=require("mongoose")
 const bcrypt=require("bcryptjs")
 const User=require("./models/userSchema")
 const jwt=require("jsonwebtoken")
+const {authenticateToken}=require("./middlewares/authenticateToken")
 
 const PORT =process.env.PORT||3000
 
@@ -56,3 +57,6 @@ app.post('/login', async (req, res) => {
     const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({ token });
 });
+app.get('/protected', authenticateToken,(req,res)=>{
+    res.json({message:`${req.user.username}`})
+})
