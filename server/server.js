@@ -28,6 +28,10 @@ mongoose.connect(process.env.MONGO_URL)
     console.error(err);
 });
 
+function generateAccessToken(username){
+    return jwt.sign({ username }, process.env.ACCESS_SECRET, { expiresIn: '1h' });
+}
+
 // User Registration Route
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
@@ -56,8 +60,15 @@ app.post('/login', async (req, res) => {
         return res.status(401).json({ error: 'Invalid credentials' });
     }
     
-    const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token });
+    const accessToken = generateAccessToken({username})
+    const refreshToken = jwt.sign({ username }, process.env.REFRESH_SECRET, { expiresIn: '7d' });
+
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+          // Use true in production with HTTPS
+        sameSite: 'Strict'
+    });
+    res.json({ accessToken });
 });
 app.get('/protected', authenticateToken,(req,res)=>{
     res.json({ message: `Welcome, ${req.user.username}! You have access to this protected route.` });
